@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     llm_model: str = "claude-sonnet-4-20250514"
     llm_provider: str = "anthropic"  # "anthropic" or "openai"
 
+    # CORS
+    cors_origins: str = "http://localhost:3000,http://localhost:3001"
+
     # Embedding
     embed_model: str = "BAAI/bge-small-en-v1.5"
 
