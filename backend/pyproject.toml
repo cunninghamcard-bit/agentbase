@@ -1,0 +1,15 @@
+[project]
+name = "agentbase-backend"
+version = "0.1.0"
+description = "RAG-powered AI Agent research engine backend"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic-settings>=2.0",
+    "lancedb>=0.20",
+    "fastembed>=0.6",
+    "pymupdf>=1.25",
+    "anthropic>=0.52",
+    "openai>=1.0",
+]

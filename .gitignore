@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+
+# Build output
+.next/
+landing/.next/
+
+# Raw data (too large for git, only index needed)
+papers/
+blogs/
+docs_html/
+
+# Vector index (179MB, regeneratable)
+data/lancedb/
+
+# Environment
+.env
+.env.local
+backend/.env
+
+# OS
+.DS_Store
+*.swp
+
+# Embedding model cache
+.cache/

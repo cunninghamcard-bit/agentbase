@@ -1,0 +1,11 @@
+papers/
+blogs/
+landing/
+scripts/
+eval/
+docs_html/
+.git/
+**/__pycache__/
+**/.venv/
+**/node_modules/
+**/.next/

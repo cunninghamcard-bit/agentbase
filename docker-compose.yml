@@ -1,0 +1,24 @@
+services:
+  backend:
+    build: ./backend
+    volumes:
+      - ./data:/data
+    environment:
+      - DATA_DIR=/data
+      - DB_PATH=/data/lancedb
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
+      - LLM_MODEL=${LLM_MODEL:-claude-sonnet-4-20250514}
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build: ./landing
+    environment:
+      - BACKEND_URL=http://backend:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
