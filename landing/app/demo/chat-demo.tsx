@@ -271,11 +271,11 @@ export function ChatDemo() {
           }
         }
       }
-    } catch (err: any) {
-      if (err?.name === "AbortError") {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") {
         // user cancelled or unmounted
       } else {
-        setError(err?.message || String(err));
+        setError(err instanceof Error ? err.message : String(err));
       }
     } finally {
       setIsStreaming(false);
@@ -325,7 +325,7 @@ export function ChatDemo() {
 
       <section className="mx-auto max-w-6xl px-6 py-12">
         <div className="flex flex-wrap gap-3">
-          <Badge variant="secondary">Live RAGFlow</Badge>
+          <Badge variant="secondary">AgentBase demo</Badge>
           <Badge variant="outline">{PAPERS}+ papers</Badge>
           <Badge variant="outline">{BLOGS} blogs</Badge>
           <Badge variant="outline">Grounded citations</Badge>
@@ -336,9 +336,9 @@ export function ChatDemo() {
             Ask the corpus
           </h1>
           <p className="mt-4 text-base leading-7 text-muted-foreground sm:text-lg">
-            This demo streams real answers from the local RAGFlow instance over
-            a live subset of papers and blogs. If parsing is still running, it
-            may return a temporary notice.
+            This demo streams real answers from the AgentBase backend over a live
+            subset of papers and blogs. If ingest or indexing is still warming up,
+            it may return a temporary notice.
           </p>
         </div>
 
@@ -421,7 +421,7 @@ export function ChatDemo() {
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline">Agent answer</Badge>
                     <Badge variant="outline">
-                      {usedRAG ? "RAGFlow live" : "Preset"}
+                      {usedRAG ? "AgentBase live" : "Preset"}
                     </Badge>
                     {isStreaming && (
                       <Badge variant="secondary">Streaming</Badge>
@@ -499,8 +499,9 @@ export function ChatDemo() {
               </CardHeader>
               <CardContent className="grid gap-3 text-sm leading-7 text-muted-foreground sm:grid-cols-3">
                 <div className="rounded-xl border border-border/50 bg-background/50 p-4">
-                  The corpus is real: local RAGFlow is indexing a curated subset
-                  of the full paper and blog collection.
+                  The corpus is real: AgentBase is serving a curated subset of
+                  the full paper and blog collection through the same backend
+                  used by the product UI.
                 </div>
                 <div className="rounded-xl border border-border/50 bg-background/50 p-4">
                   The answer format is product-shaped: prompt, response,

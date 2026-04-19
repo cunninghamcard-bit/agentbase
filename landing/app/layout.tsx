@@ -1,10 +1,32 @@
 import type { Metadata } from "next";
+import { Literata, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+const literata = Literata({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+  axes: ["opsz"],
+});
+
+const geistSans = Geist({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "AgentBase — AI Agent 研究引擎",
-  description:
-    "基于 500+ 顶会论文和前沿技术博客的深度 RAG 问答系统。",
+  title: {
+    default: "AgentBase",
+    template: "%s · AgentBase",
+  },
+  description: "Agent 研究问题的首页、对话与资料页。",
 };
 
 export default function RootLayout({
@@ -13,7 +35,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh" className="h-full antialiased">
+    <html
+      lang="zh"
+      className={`h-full antialiased ${literata.variable} ${geistSans.variable} ${geistMono.variable}`}
+    >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         {children}
       </body>

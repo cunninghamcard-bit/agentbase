@@ -8,7 +8,7 @@ from pathlib import Path
 from app.config import settings
 from app.ingest.pdf import extract_text
 from app.rag.chunker import Chunk, chunk_text, chunk_by_sections
-from app.rag import embedder, store
+from app.rag import embedder, store, sparse
 
 log = logging.getLogger(__name__)
 
@@ -123,7 +123,8 @@ def embed_and_store(chunks: list[Chunk]) -> int:
         log.info("Embedded %d / %d chunks", min(i + BATCH_SIZE, len(texts)), len(texts))
 
     total = store.create_table(records, mode="overwrite")
-    log.info("Stored %d records in LanceDB", total)
+    sparse.build(records)
+    log.info("Stored %d records in LanceDB + BM25 sidecar", total)
     return total
 
 

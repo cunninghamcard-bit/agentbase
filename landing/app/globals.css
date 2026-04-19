@@ -9,8 +9,9 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
+  --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -159,3 +160,84 @@
     linear-gradient(90deg, oklch(0.5 0.02 55 / 4%) 1px, transparent 1px);
   background-size: 100% 100%, 60px 60px, 60px 60px;
 }
+
+/* ─── Editorial typography utilities ─────────────────────────── */
+
+.font-display { font-family: var(--font-display), Georgia, serif; font-feature-settings: "kern", "liga"; }
+.tnum         { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+.onum         { font-variant-numeric: oldstyle-nums tabular-nums; }
+.lnum         { font-variant-numeric: lining-nums tabular-nums; }
+.smcp         { font-feature-settings: "smcp", "c2sc"; text-transform: lowercase; letter-spacing: 0.08em; }
+
+/* Inline metric — the editorial way to show a number */
+.metric-inline {
+  font-family: var(--font-display), Georgia, serif;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum", "tnum";
+  font-weight: 500;
+  font-style: italic;
+  color: var(--primary);
+}
+
+/* Figure caption — for diagrams + tables */
+.caption {
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: oklch(0.40 0.02 55);
+  font-variant-numeric: lining-nums;
+}
+.caption .fig-label {
+  font-family: var(--font-display), Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  color: oklch(0.30 0.02 55);
+  margin-right: 0.35rem;
+}
+
+/* Hairline separator — editorial style */
+.hairline {
+  border: none;
+  height: 1px;
+  background: linear-gradient(to right, transparent, oklch(0.75 0.025 60 / 60%) 15%, oklch(0.75 0.025 60 / 60%) 85%, transparent);
+}
+
+/* Pull quote / lede body */
+.lede {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.125rem;
+  line-height: 1.55;
+  font-weight: 400;
+  color: oklch(0.25 0.02 55);
+  letter-spacing: -0.005em;
+}
+
+/* Drop cap for first paragraph */
+.dropcap::first-letter {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 3.2em;
+  font-weight: 500;
+  float: left;
+  line-height: 0.85;
+  padding: 0.08em 0.08em 0 0;
+  color: var(--primary);
+}
+
+/* Connector dot — used in flow diagrams */
+.dot-sm {
+  width: 5px; height: 5px; border-radius: 999px;
+  background: oklch(0.637 0.165 42);
+}
+
+/* Data bar — used in eval table, uses backgrounds not border-left */
+.databar-track {
+  position: relative;
+  height: 6px;
+  border-radius: 0;
+  background: oklch(0.93 0.015 75);
+  overflow: hidden;
+}
+.databar-fill-base { background: oklch(0.70 0.015 60); }
+.databar-fill-ours { background: oklch(0.637 0.165 42); }
+
+/* Tabular numbers for the whole page */
+.wants-tnum { font-variant-numeric: tabular-nums; }

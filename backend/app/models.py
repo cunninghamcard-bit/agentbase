@@ -8,6 +8,11 @@ class ChatRequest(BaseModel):
     question: str
 
 
+class ContinueRequest(BaseModel):
+    thread_id: str
+    selected_indices: list[int]
+
+
 class IngestRequest(BaseModel):
     source: str = "all"  # "papers", "blogs", "all"
 

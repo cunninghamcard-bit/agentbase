@@ -2,6 +2,16 @@ export const runtime = "nodejs";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:8000";
 
+type ChatErrorPayload = {
+  code: number;
+  message: string;
+  data: { answer: string; reference: [] };
+};
+
+function encodeEvent(payload: ChatErrorPayload) {
+  return new TextEncoder().encode(`data: ${JSON.stringify(payload)}\n\n`);
+}
+
 export async function POST(request: Request) {
   let body: { question?: string };
   try {
@@ -21,7 +31,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -34,15 +43,16 @@ export async function POST(request: Request) {
         if (!res.ok || !res.body) {
           const text = await res.text().catch(() => "Unknown error");
           controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({
-                code: res.status,
-                message: text,
-                data: { answer: `Backend error (${res.status}): ${text}`, reference: [] },
-              })}\n\n`
-            )
+            encodeEvent({
+              code: res.status,
+              message: text,
+              data: {
+                answer: `Backend error (${res.status}). Check BACKEND_URL and backend health before retrying.\n\n${text}`,
+                reference: [],
+              },
+            })
           );
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
           controller.close();
           return;
         }
@@ -54,17 +64,19 @@ export async function POST(request: Request) {
           controller.enqueue(value);
         }
         controller.close();
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
         controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({
-              code: 500,
-              message: err?.message || String(err),
-              data: { answer: "Failed to reach backend.", reference: [] },
-            })}\n\n`
-          )
+          encodeEvent({
+            code: 500,
+            message,
+            data: {
+              answer: `Failed to reach backend. Set BACKEND_URL to the FastAPI service and verify /api/health is reachable.\n\n${message}`,
+              reference: [],
+            },
+          })
         );
-        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
         controller.close();
       }
     },

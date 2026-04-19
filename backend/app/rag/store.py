@@ -64,6 +64,7 @@ def search(query_vector: list[float], top_k: int = 20, source_type: str = "") ->
 
     return [
         {
+            "id": r.get("id") or f"{r['source_id']}_{r['chunk_index']}",
             "text": r["text"],
             "source_id": r["source_id"],
             "source_type": r["source_type"],

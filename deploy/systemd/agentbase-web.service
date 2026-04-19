@@ -1,0 +1,16 @@
+[Unit]
+Description=AgentBase Next.js Web App
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user/agentbase/landing
+Environment="PORT=3000"
+Environment="BACKEND_URL=http://54.254.215.8:8000"
+ExecStart=/usr/local/bin/bun run start
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
