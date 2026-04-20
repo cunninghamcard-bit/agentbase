@@ -12,7 +12,7 @@ COPY pyproject.toml .
 RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ \
     "fastapi>=0.115" "uvicorn[standard]>=0.30" "pydantic-settings>=2.0" \
     "lancedb>=0.20" "fastembed>=0.6" "bm25s>=0.2" "pymupdf>=1.25" \
-    "anthropic>=0.52" "openai>=1.0"
+    "anthropic>=0.52" "openai>=1.0" "langgraph>=0.4" "langgraph-checkpoint-sqlite>=3.0"
 
 COPY app/ app/
 
