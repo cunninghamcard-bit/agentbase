@@ -8,6 +8,34 @@ type Message = {
   content: string;
 };
 
+function ThinkingIndicator() {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <ThinkingDots />
+      <span className="text-[11px] text-muted-foreground/80">正在思考中</span>
+    </span>
+  );
+}
+
+function ThinkingDots() {
+  return (
+    <span className="flex gap-[3px]">
+      <span
+        className="inline-block h-[5px] w-[5px] rounded-full bg-primary/70"
+        style={{ animation: "pulse 1.4s ease-in-out infinite" }}
+      />
+      <span
+        className="inline-block h-[5px] w-[5px] rounded-full bg-primary/70"
+        style={{ animation: "pulse 1.4s ease-in-out infinite", animationDelay: "0.2s" }}
+      />
+      <span
+        className="inline-block h-[5px] w-[5px] rounded-full bg-primary/70"
+        style={{ animation: "pulse 1.4s ease-in-out infinite", animationDelay: "0.4s" }}
+      />
+    </span>
+  );
+}
+
 const TRENDING = [
   {
     question: "ReAct 和 Chain-of-Thought 有什么区别？",
@@ -299,19 +327,13 @@ export function SearchChat({ papersCount = 0, blogsCount = 0 }: { papersCount?: 
                         <span className="text-xs text-muted-foreground font-mono">
                           AgentBase
                         </span>
-                        {streaming && i === messages.length - 1 && (
-                          <span className="text-xs text-muted-foreground animate-pulse">
-                            思考中...
-                          </span>
-                        )}
+                        {streaming && i === messages.length - 1 && <ThinkingIndicator />}
                       </div>
                       <div className="pl-7 text-sm leading-7 text-foreground/90 prose prose-sm prose-neutral max-w-none prose-p:my-1 prose-headings:text-foreground prose-strong:text-foreground prose-a:text-primary">
                         {msg.content ? (
                           <Markdown>{msg.content}</Markdown>
                         ) : (
-                          <span className="text-muted-foreground animate-pulse">
-                            ...
-                          </span>
+                          <ThinkingDots />
                         )}
                       </div>
                     </div>

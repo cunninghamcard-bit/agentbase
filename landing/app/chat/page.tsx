@@ -11,6 +11,34 @@ type Message = {
   content: string;
 };
 
+function ThinkingIndicator() {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <ThinkingDots />
+      <span className="text-[11px] text-muted-foreground/80">正在思考中</span>
+    </span>
+  );
+}
+
+function ThinkingDots() {
+  return (
+    <span className="flex gap-[3px]">
+      <span
+        className="inline-block h-[5px] w-[5px] rounded-full bg-primary/70"
+        style={{ animation: "pulse 1.4s ease-in-out infinite" }}
+      />
+      <span
+        className="inline-block h-[5px] w-[5px] rounded-full bg-primary/70"
+        style={{ animation: "pulse 1.4s ease-in-out infinite", animationDelay: "0.2s" }}
+      />
+      <span
+        className="inline-block h-[5px] w-[5px] rounded-full bg-primary/70"
+        style={{ animation: "pulse 1.4s ease-in-out infinite", animationDelay: "0.4s" }}
+      />
+    </span>
+  );
+}
+
 const SUGGESTIONS = [
   ...issues.slice(0, 6).map((issue) => ({
     title: issue.title,
@@ -295,14 +323,14 @@ function ChatPageInner() {
                         </div>
                         <span className="font-display text-xs italic text-muted-foreground">AgentBase</span>
                         {streaming && i === messages.length - 1 && (
-                          <span className="text-xs text-muted-foreground animate-pulse">生成中...</span>
+                          <ThinkingIndicator />
                         )}
                       </div>
                       <div className="prose prose-sm prose-neutral max-w-none pl-7 text-sm leading-7 text-foreground/90 prose-a:text-primary prose-headings:text-foreground prose-p:my-1 prose-strong:text-foreground">
                         {msg.content ? (
                           <Markdown>{msg.content}</Markdown>
                         ) : (
-                          <span className="animate-pulse text-muted-foreground">...</span>
+                          <ThinkingDots />
                         )}
                       </div>
                     </div>
