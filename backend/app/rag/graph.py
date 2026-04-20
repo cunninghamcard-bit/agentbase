@@ -82,11 +82,12 @@ def init_node(state: RAGState) -> dict:
     }
 
 
-def retrieve_node(state: RAGState) -> dict:
-    """Run the parallel retrieve subgraph."""
+async def retrieve_node(state: RAGState) -> dict:
+    """Run the parallel retrieve subgraph (async wrapper)."""
+    import asyncio
     subgraph = build_retrieve_subgraph()
-    result = subgraph.invoke(state)
-    # Subgraph returns keys compatible with RAGState; merge them in.
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(None, subgraph.invoke, state)
     return {
         "dense_results": result.get("dense_results", []),
         "sparse_results": result.get("sparse_results", []),

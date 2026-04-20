@@ -5,7 +5,7 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:8000";
 type ChatErrorPayload = {
   code: number;
   message: string;
-  data: { answer: string; reference: [] };
+  data: { answer: string; references: [] };
 };
 
 function encodeEvent(payload: ChatErrorPayload) {
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
               message: text,
               data: {
                 answer: `Backend error (${res.status}). Check BACKEND_URL and backend health before retrying.\n\n${text}`,
-                reference: [],
+                references: [],
               },
             })
           );
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
             message,
             data: {
               answer: `Failed to reach backend. Set BACKEND_URL to the FastAPI service and verify /api/health is reachable.\n\n${message}`,
-              reference: [],
+              references: [],
             },
           })
         );

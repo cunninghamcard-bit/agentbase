@@ -61,47 +61,86 @@ Rules:
 - Be concise and precise. Prefer specific claims with numbers over vague summaries.
 - Write in English."""
 
+_FALLBACK_CONTEXT_LIMIT = 4000
+
+
+def _fallback_answer(context: str, error: Exception | None = None) -> str:
+    context_preview = context[:_FALLBACK_CONTEXT_LIMIT].strip()
+    if len(context) > _FALLBACK_CONTEXT_LIMIT:
+        context_preview += "\n\n[Context truncated]"
+
+    if not settings.llm_api_key:
+        reason = "missing API key"
+    elif error is None:
+        reason = "unknown error"
+    else:
+        message = str(error).strip()
+        reason = type(error).__name__ if not message else f"{type(error).__name__}: {message}"
+
+    return f"LLM unavailable: {reason}\n\nRetrieved context:\n\n{context_preview}"
+
 
 async def generate_stream(
     question: str,
     context: str,
     references: list[dict],
 ) -> AsyncGenerator[str, None]:
+    """Stream LLM tokens via SSE.  Always yields at least ``done`` + ``[DONE]``.
+
+    On failure emits a single ``done`` with fallback text instead of partial
+    tokens so the frontend never sees a truncated answer.
+    """
     user_prompt = f"Context:\n{context}\n\nQuestion: {question}\n\nAnswer with citations [1][2] etc:"
     full_answer = ""
+    ok = False
+    try:
+        if not settings.llm_api_key:
+            raise RuntimeError("missing API key")
 
-    if settings.llm_provider == "anthropic":
-        import anthropic
-        client = anthropic.AsyncAnthropic(api_key=settings.llm_api_key, base_url=settings.llm_api_base)
-        async with client.messages.stream(
-            model=settings.llm_model,
-            max_tokens=2048,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_prompt}],
-        ) as stream:
-            async for text in stream.text_stream:
-                full_answer += text
-                yield _sse({"event": "token", "answer": full_answer})
-    else:
-        from openai import AsyncOpenAI
-        client = AsyncOpenAI(api_key=settings.llm_api_key, base_url=settings.llm_api_base)
-        stream = await client.chat.completions.create(
-            model=settings.llm_model,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            max_tokens=2048,
-            stream=True,
-        )
-        async for chunk in stream:
-            delta = chunk.choices[0].delta.content
-            if delta:
-                full_answer += delta
-                yield _sse({"event": "token", "answer": full_answer})
+        if settings.llm_provider == "anthropic":
+            import anthropic
 
-    yield _sse({"event": "done", "answer": full_answer, "references": references})
-    yield "data: [DONE]\n\n"
+            client = anthropic.AsyncAnthropic(**settings.llm_client_kwargs)
+            async with client.messages.stream(
+                model=settings.llm_model,
+                max_tokens=2048,
+                system=SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": user_prompt}],
+            ) as stream:
+                async for text in stream.text_stream:
+                    full_answer += text
+                    yield _sse({"event": "token", "answer": full_answer})
+        else:
+            from openai import AsyncOpenAI
+
+            client = AsyncOpenAI(**settings.llm_client_kwargs)
+            stream = await client.chat.completions.create(
+                model=settings.llm_model,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt},
+                ],
+                max_tokens=2048,
+                stream=True,
+            )
+            async for chunk in stream:
+                delta = chunk.choices[0].delta.content
+                if delta:
+                    full_answer += delta
+                    yield _sse({"event": "token", "answer": full_answer})
+        ok = True
+    except Exception as exc:
+        log.exception("LLM generation failed")
+        full_answer = _fallback_answer(context, exc)
+        # Only yield the final done — do not append to any previously emitted
+        # tokens so the frontend gets a clean error message.
+        yield _sse({"event": "done", "answer": full_answer, "references": references})
+        yield "data: [DONE]\n\n"
+        return
+
+    if ok:
+        yield _sse({"event": "done", "answer": full_answer, "references": references})
+        yield "data: [DONE]\n\n"
 
 
 async def _stream_llm(question: str, selected_chunks: list[dict]) -> AsyncGenerator[str, None]:
@@ -137,36 +176,46 @@ async def rag_query(
 
     t0 = time.perf_counter()
     interrupted = False
+    error_occurred = False
 
-    async for chunk in graph.astream({"question": question}, config):
-        # LangGraph interrupt marker
-        if "__interrupt__" in chunk:
-            interrupted = True
-            ir = chunk["__interrupt__"]
-            payload = {
-                "event": "interrupt",
-                "action": ir[0].value.get("action") if ir else "review",
-                "thread_id": thread_id,
-                "chunks": ir[0].value.get("chunks", []) if ir else [],
-            }
-            yield _sse(payload)
-            yield "data: [DONE]\n\n"
-            return
+    try:
+        async for chunk in graph.astream({"question": question}, config):
+            # LangGraph interrupt marker
+            if "__interrupt__" in chunk:
+                interrupted = True
+                ir = chunk["__interrupt__"]
+                payload = {
+                    "event": "interrupt",
+                    "action": ir[0].value.get("action") if ir else "review",
+                    "thread_id": thread_id,
+                    "chunks": ir[0].value.get("chunks", []) if ir else [],
+                }
+                yield _sse(payload)
+                yield "data: [DONE]\n\n"
+                return
 
-        # Regular node output: {"node_name": {"field": value}}
-        for node_name, update in chunk.items():
-            # Sanitise update for JSON serialisation (drop heavy text fields)
-            safe_update = _sanitise_update(node_name, update)
-            yield _sse({
-                "event": "node",
-                "node": node_name,
-                "update": safe_update,
-            })
+            # Regular node output: {"node_name": {"field": value}}
+            for node_name, update in chunk.items():
+                safe_update = _sanitise_update(node_name, update)
+                yield _sse({
+                    "event": "node",
+                    "node": node_name,
+                    "update": safe_update,
+                })
+    except Exception as exc:
+        log.exception("RAG graph failed")
+        error_occurred = True
+        yield _sse({
+            "event": "done",
+            "answer": f"Retrieval failed: {type(exc).__name__}: {exc}",
+            "references": [],
+        })
+        yield "data: [DONE]\n\n"
+    finally:
+        total_ms = int((time.perf_counter() - t0) * 1000)
+        log.info("graph completed in %d ms (interrupted=%s error=%s)", total_ms, interrupted, error_occurred)
 
-    total_ms = int((time.perf_counter() - t0) * 1000)
-    log.info("graph completed in %d ms (interrupted=%s)", total_ms, interrupted)
-
-    if interrupted:
+    if interrupted or error_occurred:
         return
 
     # Graph finished — grab final state and stream LLM
@@ -187,13 +236,23 @@ async def rag_query_continue(
     graph = await build_main_graph()
     config = {"configurable": {"thread_id": thread_id}}
 
-    async for chunk in graph.astream(
-        Command(resume={"selected_indices": selected_indices}),
-        config,
-    ):
-        for node_name, update in chunk.items():
-            safe_update = _sanitise_update(node_name, update)
-            yield _sse({"event": "node", "node": node_name, "update": safe_update})
+    try:
+        async for chunk in graph.astream(
+            Command(resume={"selected_indices": selected_indices}),
+            config,
+        ):
+            for node_name, update in chunk.items():
+                safe_update = _sanitise_update(node_name, update)
+                yield _sse({"event": "node", "node": node_name, "update": safe_update})
+    except Exception as exc:
+        log.exception("RAG continue failed")
+        yield _sse({
+            "event": "done",
+            "answer": f"Continue failed: {type(exc).__name__}: {exc}",
+            "references": [],
+        })
+        yield "data: [DONE]\n\n"
+        return
 
     final_state = await graph.aget_state(config)
     values = final_state.values if hasattr(final_state, "values") else final_state

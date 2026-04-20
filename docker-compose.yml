@@ -3,12 +3,14 @@ services:
     build: ./backend
     volumes:
       - ./data:/data
+    env_file:
+      - path: ./.env
+        required: false
+      - path: ./backend/.env
+        required: false
     environment:
       - DATA_DIR=/data
       - DB_PATH=/data/lancedb
-      - LLM_API_KEY=${LLM_API_KEY:-}
-      - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
-      - LLM_MODEL=${LLM_MODEL:-claude-sonnet-4-20250514}
     ports:
       - "8000:8000"
     restart: unless-stopped

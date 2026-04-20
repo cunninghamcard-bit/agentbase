@@ -54,8 +54,20 @@ cd /opt/agentbase
 
 # 创建 .env 文件（可选，没有 API key 也能用，降级为检索模式）
 cat > .env <<'EOF'
+LLM_PROVIDER=openai
+LLM_API_KEY=your-key-here
+LLM_API_BASE=https://api.kimi.com/coding/
+LLM_MODEL=kimi-latest
+EOF
+```
+
+如果你想切到 Anthropic 官方接口，改成：
+
+```bash
+cat > .env <<'EOF'
 LLM_PROVIDER=anthropic
 LLM_API_KEY=your-key-here
+LLM_API_BASE=
 LLM_MODEL=claude-sonnet-4-20250514
 EOF
 ```

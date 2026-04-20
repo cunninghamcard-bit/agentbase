@@ -194,9 +194,13 @@ def expand_query_node(state: RetrieveState) -> dict:
 
     expanded = state["question"]  # fallback
     try:
+        if not settings.llm_api_key:
+            raise RuntimeError("missing API key")
+
         if settings.llm_provider == "anthropic":
             import anthropic
-            client = anthropic.Anthropic(api_key=settings.llm_api_key, base_url=settings.llm_api_base)
+
+            client = anthropic.Anthropic(**settings.llm_client_kwargs)
             resp = client.messages.create(
                 model=settings.llm_model,
                 max_tokens=128,
@@ -205,7 +209,8 @@ def expand_query_node(state: RetrieveState) -> dict:
             expanded = resp.content[0].text.strip()
         else:
             from openai import OpenAI
-            client = OpenAI(api_key=settings.llm_api_key, base_url=settings.llm_api_base)
+
+            client = OpenAI(**settings.llm_client_kwargs)
             resp = client.chat.completions.create(
                 model=settings.llm_model,
                 messages=[{"role": "user", "content": prompt}],

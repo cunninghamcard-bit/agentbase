@@ -34,17 +34,23 @@ def rerank(query: str, candidates: list[dict], top_k: int | None = None) -> list
     The returned dicts preserve all fields of the input candidates plus:
       - rerank_score: float relevance score from the cross-encoder
       - dense_rank / sparse_rank: preserved if present on input
+
+    Falls back to no-op truncation if the model fails to load (e.g. missing
+    ONNX file or no GPU support).
     """
     if not candidates:
         return []
     top_k = top_k or settings.rerank_top_k
 
     if not settings.use_rerank:
-        # still truncate to top_k so downstream sees consistent shape
         return candidates[:top_k]
 
-    model = _get_model()
-    scores = list(model.rerank(query, [c["text"] for c in candidates]))
+    try:
+        model = _get_model()
+        scores = list(model.rerank(query, [c["text"] for c in candidates]))
+    except Exception as exc:
+        log.warning("rerank model failed (%s), falling back to RRF order", exc)
+        return candidates[:top_k]
 
     reranked = []
     for cand, score in zip(candidates, scores):

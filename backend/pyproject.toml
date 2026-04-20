@@ -16,3 +16,10 @@ dependencies = [
     "langgraph>=0.4",
     "langgraph-checkpoint-sqlite>=3.0",
 ]
+
+[tool.setuptools]
+py-modules = []
+packages = ["app"]
+
+[tool.setuptools.package-data]
+app = ["eval/golden.jsonl"]

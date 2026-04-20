@@ -27,3 +27,9 @@ backend/.env
 
 # Embedding model cache
 .cache/
+models/
+
+# SQLite runtime databases
+*.db
+*.db-shm
+*.db-wal

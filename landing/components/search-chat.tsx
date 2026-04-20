@@ -110,12 +110,19 @@ export function SearchChat({ papersCount = 0, blogsCount = 0 }: { papersCount?: 
             if (payload === "[DONE]") break;
             try {
               const parsed = JSON.parse(payload);
-              if (parsed?.data?.answer != null) {
+              const answer =
+                typeof parsed?.answer === "string"
+                  ? parsed.answer
+                  : typeof parsed?.data?.answer === "string"
+                    ? parsed.data.answer
+                    : null;
+
+              if (answer != null) {
                 setMessages((prev) => {
                   const next = [...prev];
                   next[next.length - 1] = {
                     role: "assistant",
-                    content: parsed.data.answer,
+                    content: answer,
                   };
                   return next;
                 });

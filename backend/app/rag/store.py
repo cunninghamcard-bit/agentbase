@@ -58,7 +58,10 @@ def search(query_vector: list[float], top_k: int = 20, source_type: str = "") ->
     q = tbl.search(query_vector).limit(top_k)
 
     if source_type:
-        q = q.where(f"source_type = '{source_type}'")
+        # Validate to avoid injection; only allow known literals
+        allowed = {"paper", "blog"}
+        if source_type in allowed:
+            q = q.where(f"source_type = '{source_type}'")
 
     results = q.to_list()
 
